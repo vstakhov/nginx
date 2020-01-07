@@ -4842,8 +4842,8 @@ ngx_ssl_get_serial_number(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
 }
 
 
-ngx_int_t
-ngx_ssl_get_fingerprint(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
+static ngx_int_t
+ngx_ssl_get_fingerprint_common(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s, const EVP_MD *how)
 {
     X509          *cert;
     unsigned int   len;
@@ -4856,7 +4856,7 @@ ngx_ssl_get_fingerprint(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
         return NGX_OK;
     }
 
-    if (!X509_digest(cert, EVP_sha1(), buf, &len)) {
+    if (!X509_digest(cert, how, buf, &len)) {
         X509_free(cert);
         return NGX_ERROR;
     }
@@ -4875,6 +4875,17 @@ ngx_ssl_get_fingerprint(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
     return NGX_OK;
 }
 
+ngx_int_t
+ngx_ssl_get_fingerprint(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s, const EVP_MD *how)
+{
+    return ngx_ssl_get_fingerprint_common(c, pool, s, EVP_sha1());
+}
+
+ngx_int_t
+ngx_ssl_get_fingerprint_sha2(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s, const EVP_MD *how)
+{
+    return ngx_ssl_get_fingerprint_common(c, pool, s, EVP_sha256());
+}
 
 ngx_int_t
 ngx_ssl_get_client_verify(ngx_connection_t *c, ngx_pool_t *pool, ngx_str_t *s)
